@@ -6,6 +6,9 @@ let imageObjects = []; // 石オブジェクト（位置、速度、画像デー
 let speed = 2.5; // 基本速度
 let sounds; // 衝突音を格納
 
+// スマホと判断する画面幅のしきい値
+const MOBILE_BREAKPOINT = 600;
+
 // ----------------------------------------------------
 // --- プリロード関数 ---
 // ----------------------------------------------------
@@ -30,13 +33,20 @@ function setup() {
     if (!sounds) {
         // p5.soundがロードされていない場合のダミーオブジェクト
         sounds = {
-            play: () => { 
+            play: () => {
                 // console.log("Collision sound triggered (No real sound loaded)");
                 // 実際には音源URLを置き換えてください
             },
-            isLoaded: () => true 
+            isLoaded: () => true
         };
     }
+
+    // デバイス幅に応じて画像サイズの比率を決定
+    // 画面幅がしきい値以下ならサイズを半分 (0.5)、そうでなければそのまま (1.0)
+    const sizeRatio = (windowWidth <= MOBILE_BREAKPOINT) ? 0.5 : 1.0;
+
+    // imageObjectsをリセット
+    imageObjects = [];
 
     // 石オブジェクトの初期化
     for (let img of images) {
