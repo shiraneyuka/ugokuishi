@@ -33,8 +33,8 @@ function initializeObjects() {
     }
 
     // デバイス幅に応じて画像サイズの比率を決定
-    // 画面幅がしきい値以下ならサイズを50%、そうでなければそのまま
-    const sizeRatio = (windowWidth <= MOBILE_BREAKPOINT) ? 0.5 : 1.0;
+    // 画面幅がしきい値以下ならサイズを55%、そうでなければそのまま
+    const sizeRatio = (windowWidth <= MOBILE_BREAKPOINT) ? 0.55 : 1.0;
 
     // imageObjectsをリセット
     imageObjects = [];
@@ -216,9 +216,15 @@ function windowResized() {
 // クリック/タップがされたらサウンドオン（ブラウザの制限対応）
 function mousePressed() {
     userStartAudio();
+    // テキストを即座に非表示にする
+    const infoElement = document.getElementById('p5-info');
+    if (infoElement) infoElement.style.display = 'none';
 }
 function touchStarted() {
     userStartAudio();
+    // テキストを即座に非表示にする
+    const infoElement = document.getElementById('p5-info');
+    if (infoElement) infoElement.style.display = 'none';
 }
 
 
