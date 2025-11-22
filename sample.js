@@ -213,18 +213,12 @@ function windowResized() {
     initializeObjects();
 }
 
-// クリックかタップがされたらサウンドオン（ブラウザの制限対応）
+// クリック/タップがされたらサウンドオン（ブラウザの制限対応）
 function mousePressed() {
-    if (getAudioContext().state !== 'running') {
-        getAudioContext().resume();
-        document.getElementById('p5-info').style.display = 'none';
-    }
+    userStartAudio();
 }
 function touchStarted() {
-    if (getAudioContext().state !== 'running') {
-        getAudioContext().resume();
-        document.getElementById('p5-info').style.display = 'none';
-    }
+    userStartAudio();
 }
 
 
