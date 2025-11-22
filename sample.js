@@ -33,8 +33,8 @@ function initializeObjects() {
     }
 
     // デバイス幅に応じて画像サイズの比率を決定
-    // 画面幅がしきい値以下ならサイズを70%、そうでなければそのまま
-    const sizeRatio = (windowWidth <= MOBILE_BREAKPOINT) ? 0.7 : 1.0;
+    // 画面幅がしきい値以下ならサイズを50%、そうでなければそのまま
+    const sizeRatio = (windowWidth <= MOBILE_BREAKPOINT) ? 0.5 : 1.0;
 
     // imageObjectsをリセット
     imageObjects = [];
