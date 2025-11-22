@@ -22,6 +22,57 @@ function preload() {
 }
 
 // ----------------------------------------------------
+// --- 石オブジェクトの初期化関数 ---
+// 画面サイズ変更時にも再実行されるように分離
+// ----------------------------------------------------
+
+function initializeObjects() {
+    // サウンドオブジェクトがない場合のダミー設定（preloadのフォールバックで対応しているが念のため）
+    if (!sounds || (sounds.isLoaded && !sounds.isLoaded())) {
+        sounds = { play: () => {}, isLoaded: () => true };
+    }
+
+    // デバイス幅に応じて画像サイズの比率を決定
+    // 画面幅がしきい値以下ならサイズを70%、そうでなければそのまま
+    const sizeRatio = (windowWidth <= MOBILE_BREAKPOINT) ? 0.7 : 1.0;
+
+    // imageObjectsをリセット
+    imageObjects = [];
+
+    // 石オブジェクトの初期化
+    for (let img of images) {
+        // imgのロードが失敗している場合（width/heightが0）はスキップ
+        if (!img || img.width === 0 || img.height === 0) continue;
+
+        const baseW = img.width;
+        const baseH = img.height;
+
+        let angle = random(TWO_PI);
+        let dx = cos(angle) * speed;
+        let dy = sin(angle) * speed;
+
+        // 描画するサイズと衝突判定用の半径を計算
+        const displayW = baseW * sizeRatio;
+        const displayH = baseH * sizeRatio;
+
+        imageObjects.push({
+            img: img,
+            // 初期位置は表示サイズを考慮して設定
+            // width/height は現在のキャンバスを使用
+            x: random(width - displayW),
+            y: random(height - displayH),
+            dx: dx,
+            dy: dy,
+            angle: random(TWO_PI), // 初期回転をランダムに設定
+            // 衝突判定用の半径も表示サイズに基づく
+            r: Math.max(displayW, displayH) / 2,
+            displayW: displayW, // 描画で使用する幅
+            displayH: displayH  // 描画で使用する高さ
+        });
+    }
+}
+
+// ----------------------------------------------------
 // --- セットアップ関数 ---
 // ----------------------------------------------------
 function setup() {
@@ -29,42 +80,7 @@ function setup() {
     canvas.position(0, 0);
     canvas.style('z-index', '-1');
 
-    // サウンドオブジェクトがない場合のダミー
-    if (!sounds) {
-        // p5.soundがロードされていない場合のダミーオブジェクト
-        sounds = {
-            play: () => {
-                // console.log("Collision sound triggered (No real sound loaded)");
-                // 実際には音源URLを置き換えてください
-            },
-            isLoaded: () => true
-        };
-    }
-
-    // デバイス幅に応じて画像サイズの比率を決定
-    // 画面幅がしきい値以下ならサイズを半分 (0.5)、そうでなければそのまま (1.0)
-    const sizeRatio = (windowWidth <= MOBILE_BREAKPOINT) ? 0.5 : 1.0;
-
-    // imageObjectsをリセット
-    imageObjects = [];
-
-    // 石オブジェクトの初期化
-    for (let img of images) {
-
-        let angle = random(TWO_PI);
-        let dx = cos(angle) * speed;
-        let dy = sin(angle) * speed;
-
-        imageObjects.push({
-            img: img,
-            x: random(width), // X座標
-            y: random(height), // Y座標
-            dx: dx, // X方向速度
-            dy: dy, // Y方向速度
-            angle: 0, // 回転角度
-            r: Math.max(img.width, img.height) / 2 // 衝突判定用の半径
-        });
-    }
+    initializeObjects(); // 初期処理を実行
 }
 
 // ----------------------------------------------------
@@ -82,14 +98,15 @@ function draw() {
         obj.y += obj.dy;
 
         // 2.壁との衝突判定と反転
+        // 壁判定にobj.displayW/H を使用
         // X方向の衝突
         if (obj.x < 0) {
             obj.x = 0; // 画面内に戻す
             obj.dx *= -1; // 速度を反転
             obj.angle += random(-0.2, 0.2); // わずかに回転
             sounds.play();
-        } else if (obj.x > width - obj.img.width) {
-            obj.x = width - obj.img.width;
+        } else if (obj.x > width - obj.displayW) {
+            obj.x = width - obj.displayW;
             obj.dx *= -1;
             obj.angle += random(-0.2, 0.2);
             sounds.play();
@@ -101,8 +118,8 @@ function draw() {
             obj.dy *= -1;
             obj.angle += random(-0.2, 0.2);
             sounds.play();
-        } else if (obj.y > height - obj.img.height) {
-            obj.y = height - obj.img.height;
+        } else if (obj.y > height - obj.displayH) {
+            obj.y = height - obj.displayH;
             obj.dy *= -1;
             obj.angle += random(-0.2, 0.2);
             sounds.play();
@@ -177,10 +194,10 @@ function draw() {
     for (let obj of imageObjects) {
         // 画像の中心を基準に回転させるための描画ロジック
         push(); // 現在の描画状態（座標や回転など）を保存する
-        translate(obj.x + obj.img.width / 2, obj.y + obj.img.height / 2); // 描画の基準点（0, 0）を obj の画像の中心に移動
+        translate(obj.x + obj.displayW / 2, obj.y + obj.displayH / 2); // 描画の基準点（0, 0）を obj の画像の中心に移動
         rotate(obj.angle); // 基準点（今は画像の中心）を中心にして、画像を回転
         imageMode(CENTER); // 描画モードを中心基準に設定
-        image(obj.img, 0, 0); // 基準点(0, 0)に画像を描画
+        image(obj.img, 0, 0, obj.displayW, obj.displayH); // 基準点(0, 0)に画像を描画
         pop(); // 保存した描画状態を元に戻す
     }
 }
@@ -190,6 +207,10 @@ function draw() {
 // ----------------------------------------------------
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
+
+    // キャンバスサイズ変更後、石のサイズと位置を再計算
+    // これにより、画面サイズ変更時に当たり判定と表示が正しく更新される
+    initializeObjects();
 }
 
 // クリックかタップがされたらサウンドオン（ブラウザの制限対応）
